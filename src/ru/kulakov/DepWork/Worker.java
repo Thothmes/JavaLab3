@@ -1,66 +1,114 @@
 package ru.kulakov.DepWork;
 
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Класс представляет сотрудника компании, который может быть привязан к отделу.
+ * Поддерживает двустороннюю связь с объектом {@link Department}.
+ */
 public class Worker {
+    private String name;
+    private Department department;
 
-    private String Name;
-    private Departament Dep;
-    private boolean DepLead;
-
-    public Worker(String Name, Departament Dep) {
-        this.Name = Name;
-        this.Dep = Dep;
-        this.DepLead = false;
+    /**
+     * Создает сотрудника с указанным именем и отделом.
+     * @param name Имя сотрудника (не может быть пустым или null)
+     * @param department Отдел (может быть null)
+     * @throws IllegalArgumentException если имя пустое или null
+     */
+    public Worker(String name, Department department) {
+        if (name == null || name.isBlank()) {
+            throw new IllegalArgumentException("Имя не может быть пустым");
+        }
+        this.name = name;
+        if (department != null) {
+            department.addWorker(this);
+        }
+        this.department = department;
     }
 
-    public Worker(String Name, Departament Dep, boolean DepLead){
-        this.Name = Name;
-        this.Dep = Dep;
-        if (DepLead == false) {
-            this.DepLead = false;
-        }
-        else if (DepLead == true) {
-            setDepLead(true);
-        }
+    /**
+     * Создает сотрудника без привязки к отделу.
+     * @param name Имя сотрудника (не может быть пустым или null)
+     */
+    public Worker(String name){
+        this(name, null);
     }
 
-    public String toString() {
-        StringBuilder answer = new StringBuilder();
-        if (this.DepLead == true & this.Dep.getDepLead() == this.Name) {
-            answer.append(this.Name + " начальник отдела " + this.Dep.getDepName() + "\n");
-            return answer.toString();
+    /**
+     * Проверяет, является ли сотрудник руководителем отдела.
+     * @return true если сотрудник - руководитель своего отдела
+     */
+    public boolean isDepartmentHead() {
+        if (department == null) {
+            return false;
         }
-        else if (this.DepLead == false) {
-            answer.append(this.Name + " работает в отделе " + this.Dep.getDepName() + ", начальник которого " + this.Dep.getDepLead() + "\n");
-            return answer.toString();
-        }
-        else {
-            answer.append(this.Name + " не может работать в этом отделе, но руководить другим");
-            return answer.toString();
-        }
+        return department.isDepartmentHead(this);
     }
 
-    public void setName(String NameWorker) {
-        this.Name = NameWorker;
+    /**
+     * Устанавливает новое имя сотрудника.
+     * @throws IllegalArgumentException если имя пустое или null
+     */
+    public void setName(String name) {
+        if (name == null || name.isBlank()) {
+            throw new IllegalArgumentException("Имя не может быть пустым");
+        }
+        this.name = name;
     }
 
-    public void setDep(Departament Departament) {
-        this.Dep = Departament;
-    }
-
-    public void setDepLead(boolean LeadTrue) {
-        this.DepLead = LeadTrue;
-        this.Dep.setDepLead(this.Name);
+    /**
+     * Привязывает сотрудника к новому отделу, автоматически обновляя
+     * связи в старом и новом отделах.
+     */
+    public void setDepartment(Department department) {
+        if (department == this.department) {
+            return;
+        }
+        Department oldDepartment = this.department;
+        this.department = department;
+        if (oldDepartment != null) {
+            oldDepartment.removeWorker(this);
+        }
+        if (department != null) {
+            department.addWorker(this);
+        }
     }
 
     public String getName() {
-        return Name;
+        return name;
     }
 
-    public Departament getDep() {
-        return Dep;
+    public Department getDepartment() {
+        return department;
     }
 
-    public boolean getDepLead() {
-        return DepLead;
+    /**
+     * Возвращает неизменяемый список всех сотрудников отдела.
+     * @return пустой список, если сотрудник не принадлежит отделу
+     */
+    public List<Worker> getAllDepartmentEmployees() {
+        if (department == null) {
+            return new ArrayList<>();
+        }
+        return department.getWorkers();
+    }
+
+    /**
+     * Возвращает строку в зависимости от роли сотрудника в отделе.
+     */
+    @Override
+    public String toString() {
+        if (department == null) {
+            return (name + " без отдела");
+        }
+        if (isDepartmentHead()) {
+            return (name + " начальник отдела " + department.getDepartmentName());
+        }
+        return (
+                name + " работает в отделе " + department.getDepartmentName() +
+                        ", начальник которого " + department.getDepartmentHead().getName()
+        );
     }
 }

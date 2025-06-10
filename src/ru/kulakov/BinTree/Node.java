@@ -1,162 +1,174 @@
 package ru.kulakov.BinTree;
 
+/**
+ * Класс, представляющий узел бинарного дерева.
+ * Содержит значение, ссылки на родителя, левого и правого потомков.
+ */
 public class Node {
 
-    private int Value;
-    private Node Parent;
-    private Node RightChild;
-    private Node LeftChild;
+    private int value;
+    private Node parent;
+    private Node rightChild;
+    private Node leftChild;
 
-    public void Node (){
-        this.Value = Integer.parseInt(null);
-        this.Parent = null;
-        this.RightChild = null;
-        this.LeftChild = null;
+    /**
+     * Конструктор для создания узла.
+     * Инициализирует все поля как null, значение как 0.
+     */
+    public Node() {
+        this.value = 0;
+        this.parent = null;
+        this.rightChild = null;
+        this.leftChild = null;
     }
 
     public int getValue() {
-        return Value;
+        return value;
     }
 
     public Node getRightChild() {
-        return RightChild;
+        return rightChild;
     }
 
     public Node getLeftChild() {
-        return LeftChild;
+        return leftChild;
     }
 
     public Node getParent() {
-        return Parent;
+        return parent;
     }
 
     public void setLeftChild(Node leftChild) {
-        this.LeftChild = leftChild;
+        this.leftChild = leftChild;
     }
 
     public void setRightChild(Node rightChild) {
-        this.RightChild = rightChild;
+        this.rightChild = rightChild;
     }
 
-    public void setParent(Node Parent) {
-        this.Parent = Parent;
+    public void setParent(Node parent) {
+        this.parent = parent;
     }
 
+    /**
+     * Устанавливает значение в узел.
+     * Если узел пустой (значение 0), устанавливает значение.
+     * Иначе рекурсивно добавляет значение в поддерево.
+     *
+     * @param value значение для добавления
+     */
     public void setValue(int value) {
-        if (this.Value == 0) {
-            this.Value = value;
+        if (this.value == 0) {
+            this.value = value;
+            return;
         }
-        else if (this.Value > 0) {
-            if (this.Value < value) {
-                if (this.RightChild != null) {
-                    this.RightChild.setValue(value);
-                }
-                else {
-                    this.RightChild = new Node();
-                    this.RightChild.setParent(this);
-                    this.RightChild.setValue(value);
-                }
+
+        if (value > this.value) {
+            if (this.rightChild == null) {
+                this.rightChild = new Node();
+                this.rightChild.setParent(this);
             }
-            else if (this.Value > value) {
-                if (this.LeftChild != null) {
-                    this.LeftChild.setValue(value);
-                } else {
-                    this.LeftChild = new Node();
-                    this.LeftChild.setParent(this);
-                    this.LeftChild.setValue(value);
-                }
+            this.rightChild.setValue(value);
+        } else if (value < this.value) {
+            if (this.leftChild == null) {
+                this.leftChild = new Node();
+                this.leftChild.setParent(this);
             }
-            else {
-                System.out.print("Единственный доступный для этого значения узел уже имеет такое значение");
-            }
-        }
-        else {
-            System.out.print("Добавление отрицательных чисел нежелетельно, поскольку тогда возникнут проблемы с 0");
+            this.leftChild.setValue(value);
         }
     }
 
+    /**
+     * Удаляет значение из дерева.
+     * Рекурсивно ищет узел с заданным значением и удаляет его.
+     *
+     * @param value значение для удаления
+     */
     public void delValue(int value) {
-        if (this.Value == value) {
-            if (this.Parent == null) {
-                System.out.print("Корень удалять - не лучшая идея");
-                return;
-            }
+        if (this.value == value) {
+            deleteNode();
+            return;
+        }
 
-            if (this.LeftChild == null && this.RightChild == null) {
-                if (this.Parent.LeftChild == this) {
-                    this.Parent.LeftChild = null;
-                } else {
-                    this.Parent.RightChild = null;
-                }
-            } else if (this.LeftChild == null) {
-                if (this.Parent.LeftChild == this) {
-                    this.Parent.LeftChild = this.RightChild;
-                } else {
-                    this.Parent.RightChild = this.RightChild;
-                }
-                this.RightChild.setParent(this.Parent);
-            } else if (this.RightChild == null) {
-                if (this.Parent.LeftChild == this) {
-                    this.Parent.LeftChild = this.LeftChild;
-                } else {
-                    this.Parent.RightChild = this.LeftChild;
-                }
-                this.LeftChild.setParent(this.Parent);
-            } else {
-                Node successor = this.RightChild;
-                while (successor.LeftChild != null) {
-                    successor = successor.LeftChild;
-                }
-                this.Value = successor.Value;
-                successor.delValue(successor.Value);
-            }
+        if (value < this.value && leftChild != null) {
+            leftChild.delValue(value);
+        } else if (value > this.value && rightChild != null) {
+            rightChild.delValue(value);
+        }
+    }
+
+    private void deleteNode() {
+        if (leftChild == null && rightChild == null) {
+            replaceInParent(null);
+        } else if (leftChild == null) {
+            replaceInParent(rightChild);
+            rightChild.setParent(parent);
+        } else if (rightChild == null) {
+            replaceInParent(leftChild);
+            leftChild.setParent(parent);
         } else {
-            if (this.LeftChild != null) {
-                this.LeftChild.delValue(value);
-            }
-            if (this.RightChild != null) {
-                this.RightChild.delValue(value);
+            Node successor = findSuccessor();
+            this.value = successor.value;
+            successor.delValue(successor.value);
+        }
+    }
+
+    private void replaceInParent(Node newNode) {
+        if (parent != null) {
+            if (parent.leftChild == this) {
+                parent.setLeftChild(newNode);
+            } else {
+                parent.setRightChild(newNode);
             }
         }
     }
 
+    private Node findSuccessor() {
+        Node node = rightChild;
+        while (node.leftChild != null) {
+            node = node.leftChild;
+        }
+        return node;
+    }
+
+    /**
+     * Проверяет наличие значения в дереве.
+     * Использует бинарный поиск.
+     *
+     * @param value искомое значение
+     * @return true если значение найдено, иначе false
+     */
     public boolean containsValue(int value) {
-        if (this.Value == value) {
+        if (this.value == value) {
             return true;
         }
-        if (this.LeftChild != null && this.LeftChild.containsValue(value)) {
-            return true;
+        if (value < this.value && leftChild != null) {
+            return leftChild.containsValue(value);
         }
-        if (this.RightChild != null && this.RightChild.containsValue(value)) {
-            return true;
+        if (value > this.value && rightChild != null) {
+            return rightChild.containsValue(value);
         }
         return false;
     }
 
-    public void AllTree() {
-        StringBuilder sb = new StringBuilder();
-        inOrder(this, sb);
-        System.out.println(sb);
-    }
-
-    private void inOrder(Node node, StringBuilder sb) {
-        if (node != null) {
-            sb.append(node.Value).append(" ");
-            inOrder(node.LeftChild, sb);
-            inOrder(node.RightChild, sb);
-        }
-    }
-
+    /**
+     * Возвращает строковое представление дерева.
+     * Значения выводятся в порядке префиксного обхода (корень-левый-правый).
+     *
+     * @return строка со значениями дерева
+     */
+    @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        String ParentValue = new String();
-        if (this.Parent == null) {
-            ParentValue = "Не имеет родителя";
+        preOrder(this, sb);
+        return sb.toString().trim();
+    }
+
+    private void preOrder(Node node, StringBuilder sb) {
+        if (node != null) {
+            sb.append(node.value).append(" ");
+            preOrder(node.leftChild, sb);
+            preOrder(node.rightChild, sb);
         }
-        else {
-            ParentValue = new String(String.valueOf(this.Parent.Value));
-        }
-        sb.append("Value: " + this.Value + '\n' + "Parent: " + ParentValue + '\n' + "LeftChild: " + this.LeftChild.Value + '\n' + "RightChild: " + this.RightChild.Value);
-        return sb.toString();
     }
 }
